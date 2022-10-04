@@ -20,5 +20,8 @@ namespace WorkbenchAPI.Entities
         public int AddressId { get; set; }
         public virtual List<Product> Products { get; set; } = new List<Product>();
         public virtual List<Client> Clients { get; set; } = new List<Client>();
+
+        //public int CreatedById { get; set; }
+        
     }
 }

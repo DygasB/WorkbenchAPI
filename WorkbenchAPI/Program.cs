@@ -22,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddFluentValidation(); //validacja
+builder.Services.AddControllers().AddFluentValidation().AddNewtonsoftJson(); //validacja
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -63,11 +63,18 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("HasNationality", builder => builder.RequireClaim("Nationality", "German", "Polish"));
     options.AddPolicy("Atleast20", builder => builder.AddRequirements(new MinimumAgeRequirement(20)));
+    
 });
+
+builder.Services.AddScoped<IClientContextService, ClientContextService>();
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<IAuthorizationHandler, MinimumAgeRequirementHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ResourceOperationRequirementHandler>();
 
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly()); //serwisy automapera
 builder.Services.AddScoped<IValidator<RegisterClientDto>, RegiresterClientDtoValidator>(); //validacja
+builder.Services.AddScoped<IValidator<ShopQuery>, ShopQueryValidator>(); //validacja
 
 builder.Services.AddScoped<ShopSeeder>();
 
@@ -78,7 +85,28 @@ builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IProductService,ProductService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 
+//dodanie polityki CORS
+var allowedOrigins = new AuthenticationSettings();
+builder.Configuration.GetSection("AllowedOrigins").Bind(allowedOrigins);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontEndClient", policybuilder =>
+        policybuilder.AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithOrigins(builder.Configuration["AllowedOrigins"])
+            ); 
+});
+
 var app = builder.Build();
+
+//dodanie CACHE
+app.UseResponseCaching();
+
+//pliki statyczne - najlepiej przed sprawdzeniem CORS. Domyslnie wysyla pliki z wwwroot
+app.UseStaticFiles();
+
+//u¿ywanie polityki CORS
+app.UseCors("FrontEndClient");
 
 var scope = app.Services.CreateScope();
 var seeder = scope.ServiceProvider.GetRequiredService<ShopSeeder>();
@@ -92,6 +120,8 @@ if (app.Environment.IsDevelopment())
 }
 //sprawdzenie kazdej requesta przez autentykacje
 app.UseAuthentication();
+
+
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RequestTimeMiddleware>();

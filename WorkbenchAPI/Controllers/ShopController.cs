@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -8,9 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using WorkbenchAPI.Entities;
+using WorkbenchAPI.Exceptions;
 using WorkbenchAPI.Models;
 using WorkbenchAPI.Services;
 
@@ -29,10 +32,11 @@ namespace WorkbenchAPI.Controllers
         }
         [HttpGet]
         //[AllowAnonymous]
-        [Authorize(Policy ="HasNationality")]
-        public ActionResult<IEnumerable<Shop>> GetAll()
+        //[Authorize(Policy ="HasNationality")]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<Shop>> GetAll([FromQuery] ShopQuery? query)
         {
-            var shops = _shopservice.GetAll();
+            var shops = _shopservice.GetAll(query);
             return Ok(shops);
         }
         [HttpGet("{id}")]
@@ -53,7 +57,8 @@ namespace WorkbenchAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var id = _shopservice.CreateRestaurant(dto);
+            
+            var id = _shopservice.CreateShop(dto);
 
             return Created("/Shop/shop/{id}", null);
         }
@@ -72,6 +77,14 @@ namespace WorkbenchAPI.Controllers
             return Ok();
                 
             
+        }
+        [HttpPatch("{id}")]
+        public ActionResult Patch([FromRoute] int id, [FromBody] JsonPatchDocument<Shop>? patchShop )
+        {
+            var updatedShop = _shopservice.Patch(id, patchShop);
+            if (updatedShop is not null)
+                return Ok(updatedShop);
+            return BadRequest(ModelState);
         }
     }
 }
