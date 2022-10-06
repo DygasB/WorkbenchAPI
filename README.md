@@ -1,5 +1,5 @@
-# RESTful API 
-This application is a sample RESTful API. Shows basic operation HTTP: GET, POST, PUT, PATCH, DELETE. <br>
+# REST API 
+This application is a sample REST API. Shows basic operation HTTP: GET, POST, PUT, PATCH, DELETE. <br>
 In this program all the basic relationships between entities in the database are present. <br>
 This API contains:  validation of entities, automatic migration and automatic filling of tables with necessary records , validation of models dto, mapping of models, middleware to catch errors, configuration log ,own user authentication and authorization policy, cors mechanism,operations of generate and upload a static files <br>
 You need Microsoft Visual Studio, SQL Server, and platform of API to execute action for example: Postman. <br>
